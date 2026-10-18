@@ -1,0 +1,516 @@
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../shared/edit_profile.dart';
+import '../shared/login_screen.dart';
+import '../../widgets/header_section.dart';
+import '../../widgets/ExpertBottomNavBar.dart';
+import '../../theme/app_colors.dart';
+import '../../theme/app_text_styles.dart';
+import '../../l10n/app_localizations.dart';
+import '../../main.dart';
+import '../../services/auth_service.dart';
+
+class Expertprofile extends StatefulWidget {
+  const Expertprofile({super.key});
+
+  @override
+  State<Expertprofile> createState() => _ExpertprofileState();
+}
+
+class _ExpertprofileState extends State<Expertprofile> {
+  bool notifications = true;
+
+  bool privacyExpanded = false;
+  bool contactExpanded = false;
+  bool aboutExpanded = false;
+
+  Future<void> _logout(BuildContext context) async {
+    try {
+      // 2) Firebase sign out
+      await FirebaseAuth.instance.signOut();
+
+      // 3) navigate
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
+    } catch (e) {
+      debugPrint("Logout error: $e");
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
+
+    final user = FirebaseAuth.instance.currentUser;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF6F7FB),
+
+      body: Column(
+        children: [
+          /// ===== HEADER =====
+          HeaderSection(
+            title: "",
+            bigTitle: t.account,
+            subtitle: t.manageAccount,
+            bigTitleSize: 30,
+            subtitleSize: 15,
+            headerHeight: 170,
+            customPadding: const EdgeInsets.only(left: 24, right: 24, top: 60),
+          ),
+
+          const SizedBox(height: 20),
+
+          /// ===== BODY =====
+          Expanded(
+            child: Container(
+              transform: Matrix4.translationValues(0, -18, 0),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+
+              child: ListView(
+                padding: EdgeInsets.zero,
+
+                children: [
+                  /// ===== USER CARD =====
+                  Container(
+                    padding: const EdgeInsets.all(22),
+
+                    decoration: BoxDecoration(
+                      color: AppColors.softPurple,
+                      borderRadius: BorderRadius.circular(18),
+
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.06),
+                          blurRadius: 12,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+
+                    child: Row(
+                      children: [
+                        const CircleAvatar(
+                          radius: 40,
+                          backgroundColor: Colors.white,
+
+                          child: Icon(
+                            Icons.person,
+                            size: 40,
+                            color: Color(0xFF6C63FF),
+                          ),
+                        ),
+
+                        const SizedBox(width: 14),
+
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+
+                            children: [
+                              Text(
+                                user?.displayName ?? t.noUsername,
+                                style: AppTextStyles.title,
+                              ),
+
+                              const SizedBox(height: 4),
+
+                              Text(
+                                user?.email ?? t.noEmail,
+                                style: AppTextStyles.subtitle,
+                              ),
+
+                              const SizedBox(height: 10),
+
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const EditProfileScreen(),
+                                    ),
+                                  );
+                                },
+
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 18,
+                                    vertical: 10,
+                                  ),
+
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+
+                                    children: [
+                                      const Icon(
+                                        Icons.edit,
+                                        size: 16,
+                                        color: Color(0xFF6C63FF),
+                                      ),
+
+                                      const SizedBox(width: 6),
+
+                                      Text(
+                                        t.editProfile,
+                                        style: const TextStyle(
+                                          color: Color(0xFF6C63FF),
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 22),
+
+                  /// ===== GENERAL =====
+                  _sectionTitle(t.general),
+
+                  _card(
+                    child: Column(
+                      children: [
+                        _rowItem(
+                          icon: Icons.language,
+                          title: t.language,
+
+                          trailing: DropdownButton<String>(
+                            value: Localizations.localeOf(context).languageCode,
+
+                            underline: const SizedBox(),
+
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'en',
+                                child: Text("English"),
+                              ),
+
+                              DropdownMenuItem(
+                                value: 'ar',
+                                child: Text("العربية"),
+                              ),
+                            ],
+
+                            onChanged: (value) async {
+                              if (value == null) return;
+
+                              appLocale.value = Locale(value);
+
+                              final uid =
+                                  FirebaseAuth.instance.currentUser?.uid;
+
+                              if (uid != null) {
+                                await AuthService.updateLanguage(
+                                  uid: uid,
+                                  language: value,
+                                );
+                              }
+
+                              setState(() {});
+                            },
+                          ),
+                        ),
+
+                        const _line(),
+
+                        _rowItem(
+                          icon: Icons.notifications,
+                          title: t.notifications,
+
+                          trailing: Switch(
+                            value: notifications,
+                            onChanged: (v) => setState(() => notifications = v),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  /// ===== PRIVACY =====
+                  _sectionTitle(t.privacy),
+
+                  _card(
+                    child: Column(
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              privacyExpanded = !privacyExpanded;
+                            });
+                          },
+
+                          child: _rowItem(
+                            icon: Icons.verified_user,
+                            title: t.privacy,
+
+                            trailing: Icon(
+                              privacyExpanded
+                                  ? Icons.keyboard_arrow_up
+                                  : Icons.keyboard_arrow_down,
+                              size: 18,
+                            ),
+                          ),
+                        ),
+
+                        if (privacyExpanded)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+
+                            child: Text(
+                              t.privacyText,
+
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[700],
+                                height: 1.5,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  /// ===== SUPPORT =====
+                  _sectionTitle(t.support),
+
+                  _card(
+                    child: Column(
+                      children: [
+                        /// CONTACT
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              contactExpanded = !contactExpanded;
+                            });
+                          },
+
+                          child: _rowItem(
+                            icon: Icons.headphones,
+                            title: t.contactUs,
+
+                            trailing: Icon(
+                              contactExpanded
+                                  ? Icons.keyboard_arrow_up
+                                  : Icons.keyboard_arrow_down,
+                              size: 18,
+                            ),
+                          ),
+                        ),
+
+                        if (contactExpanded)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+
+                            child: Text(
+                              t.contactText,
+
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[700],
+                                height: 1.5,
+                              ),
+                            ),
+                          ),
+
+                        const _line(),
+
+                        /// ABOUT
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              aboutExpanded = !aboutExpanded;
+                            });
+                          },
+
+                          child: _rowItem(
+                            icon: Icons.info,
+                            title: t.aboutApp,
+
+                            trailing: Icon(
+                              aboutExpanded
+                                  ? Icons.keyboard_arrow_up
+                                  : Icons.keyboard_arrow_down,
+                              size: 18,
+                            ),
+                          ),
+                        ),
+
+                        if (aboutExpanded)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+
+                            child: Text(
+                              t.aboutText,
+
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[700],
+                                height: 1.5,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  /// ===== LOG OUT =====
+                  _card(
+                    child: InkWell(
+                      onTap: () => _logout(context),
+
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+
+                              decoration: BoxDecoration(
+                                color: Colors.red.withOpacity(0.12),
+                                shape: BoxShape.circle,
+                              ),
+
+                              child: const Icon(
+                                Icons.logout,
+                                color: Colors.red,
+                                size: 18,
+                              ),
+                            ),
+
+                            const SizedBox(width: 10),
+
+                            Text(
+                              t.logout,
+
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 14,
+                              ),
+                            ),
+
+                            const Spacer(),
+
+                            const Icon(Icons.arrow_forward_ios, size: 14),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+
+      bottomNavigationBar: const ExpertBottomNavBar(currentIndex: 3),
+    );
+  }
+
+  Widget _sectionTitle(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+
+      child: Text(
+        text,
+
+        style: TextStyle(
+          color: AppColors.primary,
+          fontWeight: FontWeight.w600,
+          fontSize: 15,
+        ),
+      ),
+    );
+  }
+
+  Widget _card({required Widget child}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
+        ],
+      ),
+
+      child: child,
+    );
+  }
+
+  Widget _rowItem({
+    required IconData icon,
+    required String title,
+    required Widget trailing,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+
+            decoration: BoxDecoration(
+              color: AppColors.softPurple,
+              shape: BoxShape.circle,
+            ),
+
+            child: Icon(icon, color: AppColors.primary, size: 18),
+          ),
+
+          const SizedBox(width: 10),
+
+          Text(title, style: const TextStyle(fontSize: 14)),
+
+          const Spacer(),
+
+          trailing,
+        ],
+      ),
+    );
+  }
+}
+
+class _line extends StatelessWidget {
+  const _line();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Divider(
+      height: 1,
+      thickness: 0.8,
+      indent: 64,
+      endIndent: 16,
+      color: Color(0xFFEDEEF3),
+    );
+  }
+}

@@ -1,0 +1,243 @@
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
+import '../../services/db_service.dart';
+import '../../models/individual_report_item.dart';
+import '../../models/cross_report_item.dart';
+import 'individual_report_screen.dart';
+import 'cross_report_screen.dart';
+import '../../widgets/header_section.dart';
+import '../../widgets/bottom_nav_bar.dart';
+
+class SavedReportsScreen extends StatefulWidget {
+  final bool selectionMode;
+
+  const SavedReportsScreen({super.key, this.selectionMode = false});
+
+  @override
+  State<SavedReportsScreen> createState() => _SavedReportsScreenState();
+}
+
+class _SavedReportsScreenState extends State<SavedReportsScreen> {
+  List<Map<String, dynamic>> reports = [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadReports();
+  }
+
+  Future<void> loadReports() async {
+    final data = await DBService.getReports();
+    setState(() {
+      reports = data;
+    });
+  }
+
+  String detectType(Map<String, dynamic> item, List jsonData) {
+    final savedType = item['type'];
+    if (savedType != null) return savedType.toString();
+
+    if (jsonData.isNotEmpty) {
+      final firstItem = jsonData.first;
+      if (firstItem is Map &&
+          (firstItem.containsKey('affectedRisk') ||
+              firstItem.containsKey('carrierRisk') ||
+              firstItem.containsKey('healthyRisk') ||
+              firstItem.containsKey('sectionTitle'))) {
+        return 'cross';
+      }
+    }
+    return 'individual';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF7F8FF),
+
+      body: Column(
+        children: [
+          HeaderSection(
+            title: "",
+            bigTitle: t.savedReports,
+            subtitle: t.savedReportsDesc,
+
+            bigTitleSize: 30,
+            subtitleSize: 14,
+            headerHeight: 150,
+          ),
+
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(30),
+              ),
+
+              child: reports.isEmpty
+                  ? _buildEmpty(t)
+                  : ListView.builder(
+                      itemCount: reports.length,
+                      itemBuilder: (context, index) {
+                        final item = reports[index];
+                        final title =
+                            item['title']?.toString() ?? t.savedReport;
+
+                        final jsonData = jsonDecode(item['data'].toString());
+
+                        final type = detectType(item, jsonData);
+
+                        if (type == 'individual') {
+                          return _buildIndividual(item, jsonData, title, t);
+                        } else {
+                          return _buildCross(item, jsonData, title, t);
+                        }
+                      },
+                    ),
+            ),
+          ),
+        ],
+      ),
+
+      bottomNavigationBar: const BottomNavBar(currentIndex: 1),
+    );
+  }
+
+  /// EMPTY
+  Widget _buildEmpty(AppLocalizations t) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.folder_open_outlined,
+            size: 90,
+            color: Colors.grey.shade400,
+          ),
+          const SizedBox(height: 20),
+          Text(
+            t.noSavedReports,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            t.savedReportsDesc,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// INDIVIDUAL
+  Widget _buildIndividual(
+    Map item,
+    List jsonData,
+    String title,
+    AppLocalizations t,
+  ) {
+    List<IndividualReportItem> reportItems = [];
+
+    for (var r in jsonData) {
+      reportItems.add(
+        IndividualReportItem.fromJson(Map<String, dynamic>.from(r), null),
+      );
+    }
+
+    return _buildCard(
+      icon: Icons.person,
+      title: title,
+      subtitle: t.genesCount(reportItems.length),
+      onTap: () {
+        if (widget.selectionMode) {
+          Navigator.pop(context, item);
+          return;
+        }
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => IndividualReportScreen(
+              reportItems: reportItems,
+              fileName: title,
+              showDownload: false,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// CROSS
+  Widget _buildCross(
+    Map item,
+    List jsonData,
+    String title,
+    AppLocalizations t,
+  ) {
+    List<CrossReportItem> reportItems = [];
+
+    for (var r in jsonData) {
+      reportItems.add(
+        CrossReportItem.fromJson(
+          Map<String, dynamic>.from(r),
+          r['sectionTitle']?.toString() ?? '',
+        ),
+      );
+    }
+
+    return _buildCard(
+      icon: Icons.family_restroom,
+      title: title,
+      subtitle: t.conditionsCount(reportItems.length),
+      onTap: () {
+        if (widget.selectionMode) {
+          Navigator.pop(context, {
+            "title": item['title'],
+            "data": jsonDecode(item['data']),
+          });
+          return;
+        }
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CrossReportScreen(
+              reports: reportItems,
+              fileName: title,
+              showDownload: false,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// CARD
+  Widget _buildCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 15),
+      decoration: BoxDecoration(
+        color: const Color(0xFFC8CDFF),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: ListTile(
+        leading: Icon(icon, color: const Color(0xFF6C63FF)),
+        title: Text(title),
+        subtitle: Text(subtitle),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+        onTap: onTap,
+      ),
+    );
+  }
+}

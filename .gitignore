@@ -1,0 +1,88 @@
+############################
+# Flutter
+############################
+**/build/
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/.pub-cache/
+**/.metadata
+
+############################
+# Android
+############################
+**/local.properties
+**/.gradle/
+**/captures/
+
+############################
+# iOS / macOS
+############################
+**/ios/Pods/
+**/ios/.symlinks/
+**/Flutter/ephemeral/
+**/DerivedData/
+
+############################
+# Python
+############################
+**/__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+############################
+# Python Virtual Environment
+############################
+venv/
+env/
+.venv/
+modrik_env/
+
+############################
+# Secrets
+############################
+**/.env
+**/.env.*
+**/serviceAccountKey.json
+**/google-services.json
+**/GoogleService-Info.plist
+*.pem
+*.key
+*.p12
+
+############################
+# IDE
+############################
+.vscode/
+.idea/
+
+############################
+# macOS
+############################
+.DS_Store
+
+############################
+# Logs
+############################
+*.log
+
+############################
+# Coverage
+############################
+.coverage
+coverage/
+htmlcov/
+
+############################
+# Temporary files
+############################
+*.tmp
+*.temp
+*.bak
+*.swp
+# Keep the example settings file
+!**/.env.example
