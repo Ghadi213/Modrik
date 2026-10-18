@@ -113,7 +113,7 @@ This project integrates several open-source tools, public genomic resources, and
 
 Developed as a Computer Science Graduation Project by the Modrik Team.
 
-[Ghadi Alrashdi](https://github.com/Ghadi213) · Hagar Naga · [Rudaynah Alghubishy](https://github.com/itsrudaynah) · Majd Alharbi
+[Ghadi Alrashdi](https://github.com/Ghadi213) · Hagar Naga · [Rudaynah Alghubishy](https://github.com/itsrudaynah) · Majd Alharbi · Lina Althalabi
 
 ## Copyright
 
