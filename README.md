@@ -103,7 +103,7 @@ Modrik/
 
 Developed by the **Modrik Team** as a Computer Science graduation project at Umm Al-Qura University.
 
-**Ghadi Alrashdi** · [LinkedIn](https://www.linkedin.com/in/ghadi-alrashdi-431a67276) · [GitHub](https://github.com/Ghadi213)
+[Ghadi Alrashdi](https://github.com/Ghadi213) · Hagar Naga · [Rudaynah Alghubishy](https://github.com/itsrudaynah) · Majd Alharbi
 
 ## Acknowledgments
 
